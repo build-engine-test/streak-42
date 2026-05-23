@@ -1,0 +1,156 @@
+/* Build Engine scaffold — Modern SaaS design system.
+ *
+ * Tailwind CSS v4 ships its config in CSS via @theme. The semantic shadcn
+ * tokens below (--background, --foreground, --card, …) are wired to a small
+ * set of --brand-* CSS variables that the Director's BrandPalette populates
+ * per build (see schemas/plan_manifest.py::BrandPalette).
+ *
+ * If brand variables are not injected, the :root fallbacks below produce a
+ * neutral, accessible palette so the template builds standalone.
+ */
+
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------- */
+/* Brand palette fallbacks (overridden per-build by the Director).         */
+/* OKLCH triples kept inside the Critic-enforced legibility window:       */
+/* lightness 0.40-0.70, chroma 0.08-0.18.                                  */
+/* ---------------------------------------------------------------------- */
+:root {
+  --brand-primary: oklch(0.55 0.14 250);
+  --brand-secondary: oklch(0.62 0.12 200);
+  --brand-accent: oklch(0.58 0.14 220);
+  --brand-neutral: oklch(0.58 0.08 250);
+
+  --brand-primary-dark: oklch(0.68 0.14 250);
+  --brand-secondary-dark: oklch(0.70 0.12 200);
+  --brand-accent-dark: oklch(0.70 0.14 220);
+  --brand-neutral-dark: oklch(0.30 0.06 250);
+}
+
+/* ---------------------------------------------------------------------- */
+/* shadcn semantic tokens — light                                          */
+/* ---------------------------------------------------------------------- */
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.15 0 0);
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.15 0 0);
+
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.15 0 0);
+
+  --primary: var(--brand-primary);
+  --primary-foreground: oklch(0.99 0 0);
+
+  --secondary: oklch(0.96 0.01 250);
+  --secondary-foreground: oklch(0.22 0 0);
+
+  --muted: oklch(0.96 0.01 250);
+  --muted-foreground: oklch(0.50 0.02 250);
+
+  --accent: var(--brand-accent);
+  --accent-foreground: oklch(0.99 0 0);
+
+  --destructive: oklch(0.55 0.22 27);
+  --destructive-foreground: oklch(0.99 0 0);
+
+  --border: oklch(0.92 0.01 250);
+  --input: oklch(0.92 0.01 250);
+  --ring: var(--brand-primary);
+
+  --radius: 0.625rem;
+}
+
+/* ---------------------------------------------------------------------- */
+/* shadcn semantic tokens — dark                                           */
+/* ---------------------------------------------------------------------- */
+.dark {
+  --background: oklch(0.16 0.01 250);
+  --foreground: oklch(0.97 0 0);
+
+  --card: oklch(0.20 0.01 250);
+  --card-foreground: oklch(0.97 0 0);
+
+  --popover: oklch(0.20 0.01 250);
+  --popover-foreground: oklch(0.97 0 0);
+
+  --primary: var(--brand-primary-dark);
+  --primary-foreground: oklch(0.13 0.01 250);
+
+  --secondary: oklch(0.26 0.02 250);
+  --secondary-foreground: oklch(0.97 0 0);
+
+  --muted: oklch(0.26 0.02 250);
+  --muted-foreground: oklch(0.70 0.02 250);
+
+  --accent: var(--brand-accent-dark);
+  --accent-foreground: oklch(0.13 0.01 250);
+
+  --destructive: oklch(0.65 0.22 27);
+  --destructive-foreground: oklch(0.99 0 0);
+
+  --border: oklch(0.30 0.02 250);
+  --input: oklch(0.30 0.02 250);
+  --ring: var(--brand-primary-dark);
+}
+
+/* ---------------------------------------------------------------------- */
+/* @theme inline — Tailwind v4 design tokens map onto our CSS variables.   */
+/* ---------------------------------------------------------------------- */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Base typography + utilities                                             */
+/* ---------------------------------------------------------------------- */
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Tabular numerals for any cell that contains numeric data. shadcn tables,
+ * dashboard stat cards, and currency columns all opt into this. */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}

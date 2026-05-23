@@ -1,0 +1,300 @@
+{
+  "build_id": "42",
+  "plan_hash_note": "Read-only reference. Translate this into Drizzle code in lib/db/schema.ts.",
+  "tables": [
+    {
+      "name": "habits",
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigserial",
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "text",
+          "not_null": true
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "not_null": true,
+          "check": "length(name) BETWEEN 1 AND 60"
+        },
+        {
+          "name": "cadence",
+          "type": "text",
+          "not_null": true,
+          "check": "cadence IN ('daily','weekdays')"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "not_null": true,
+          "default": "now()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "habits_user_id_idx",
+          "columns": [
+            "user_id"
+          ]
+        },
+        {
+          "name": "habits_user_created_idx",
+          "columns": [
+            "user_id",
+            "created_at"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "check_ins",
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigserial",
+          "primary_key": true
+        },
+        {
+          "name": "habit_id",
+          "type": "bigint",
+          "not_null": true,
+          "references": {
+            "table": "habits",
+            "column": "id",
+            "on_delete": "cascade"
+          }
+        },
+        {
+          "name": "user_id",
+          "type": "text",
+          "not_null": true
+        },
+        {
+          "name": "occurred_on",
+          "type": "date",
+          "not_null": true,
+          "default": "current_date"
+        }
+      ],
+      "constraints": [
+        {
+          "type": "unique",
+          "columns": [
+            "habit_id",
+            "occurred_on"
+          ]
+        }
+      ],
+      "indexes": [
+        {
+          "name": "check_ins_user_occurred_idx",
+          "columns": [
+            "user_id",
+            "occurred_on"
+          ],
+          "order": "desc"
+        },
+        {
+          "name": "check_ins_habit_occurred_idx",
+          "columns": [
+            "habit_id",
+            "occurred_on"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "user",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "primary_key": true
+        },
+        {
+          "name": "email",
+          "type": "text",
+          "not_null": true,
+          "unique": true
+        },
+        {
+          "name": "email_verified",
+          "type": "boolean",
+          "not_null": true,
+          "default": "false"
+        },
+        {
+          "name": "name",
+          "type": "text"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "not_null": true,
+          "default": "now()"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "not_null": true,
+          "default": "now()"
+        }
+      ],
+      "note": "Better Auth core user table."
+    },
+    {
+      "name": "session",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "text",
+          "not_null": true,
+          "references": {
+            "table": "user",
+            "column": "id",
+            "on_delete": "cascade"
+          }
+        },
+        {
+          "name": "token",
+          "type": "text",
+          "not_null": true,
+          "unique": true
+        },
+        {
+          "name": "expires_at",
+          "type": "timestamptz",
+          "not_null": true
+        },
+        {
+          "name": "ip_address",
+          "type": "text"
+        },
+        {
+          "name": "user_agent",
+          "type": "text"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "not_null": true,
+          "default": "now()"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "not_null": true,
+          "default": "now()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "session_user_idx",
+          "columns": [
+            "user_id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "account",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "text",
+          "not_null": true,
+          "references": {
+            "table": "user",
+            "column": "id",
+            "on_delete": "cascade"
+          }
+        },
+        {
+          "name": "account_id",
+          "type": "text",
+          "not_null": true
+        },
+        {
+          "name": "provider_id",
+          "type": "text",
+          "not_null": true
+        },
+        {
+          "name": "password",
+          "type": "text"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "not_null": true,
+          "default": "now()"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "not_null": true,
+          "default": "now()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "account_user_idx",
+          "columns": [
+            "user_id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "verification",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "primary_key": true
+        },
+        {
+          "name": "identifier",
+          "type": "text",
+          "not_null": true
+        },
+        {
+          "name": "value",
+          "type": "text",
+          "not_null": true
+        },
+        {
+          "name": "expires_at",
+          "type": "timestamptz",
+          "not_null": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "not_null": true,
+          "default": "now()"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "not_null": true,
+          "default": "now()"
+        }
+      ]
+    }
+  ]
+}
