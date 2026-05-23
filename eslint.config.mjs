@@ -54,6 +54,9 @@ const eslintConfig = [
         clearTimeout: "readonly",
         setInterval: "readonly",
         clearInterval: "readonly",
+        require: "readonly",
+        module: "readonly",
+        exports: "readonly",
       },
     },
     rules: {
