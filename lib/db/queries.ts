@@ -18,6 +18,20 @@ export type DashboardHabit = {
   readonly createdAt: Date;
 };
 
+/**
+ * A row returned by `getHabitsForUser`. Includes the owning `userId`
+ * so callers (and the cross-user isolation test) can assert that
+ * scope was honored. Production callers typically discard `userId`
+ * since they already know the value they passed in.
+ */
+export type UserHabit = {
+  readonly id: bigint;
+  readonly userId: string;
+  readonly name: string;
+  readonly cadence: Cadence;
+  readonly createdAt: Date;
+};
+
 export type DashboardCheckIn = {
   readonly habitId: bigint;
   readonly occurredOn: string;
@@ -101,4 +115,40 @@ export async function getDashboardData(
     .orderBy(desc(checkIns.occurredOn));
 
   return { habits: userHabits, checkIns: recentCheckIns };
+}
+
+/**
+ * Return every habit owned by `userId`, newest first.
+ *
+ * This is the canonical "read habits scoped to a user" helper. The
+ * cross-user isolation test in `tests/auth/cross-user-isolation.test.ts`
+ * asserts that calling this with one user's id never returns another
+ * user's rows — there is no global "list all habits" path in app code.
+ *
+ * Throws on a blank `userId` so accidental empty-string scoping (which
+ * Postgres would happily evaluate to "WHERE user_id = ''") surfaces
+ * as a typed error at the boundary instead of a silent leak.
+ */
+export async function getHabitsForUser(
+  userId: string,
+): Promise<ReadonlyArray<UserHabit>> {
+  if (typeof userId !== "string" || userId.length === 0) {
+    throw new TypeError(
+      "getHabitsForUser: 'userId' must be a non-empty string",
+    );
+  }
+
+  const rows = await db
+    .select({
+      id: habits.id,
+      userId: habits.userId,
+      name: habits.name,
+      cadence: habits.cadence,
+      createdAt: habits.createdAt,
+    })
+    .from(habits)
+    .where(eq(habits.userId, userId))
+    .orderBy(desc(habits.createdAt));
+
+  return rows;
 }
