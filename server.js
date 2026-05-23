@@ -23,9 +23,19 @@ const { spawnSync } = require('child_process');
 const path = require('path');
 const next = require('next');
 
+// This file is the PRODUCTION entry point (invoked via `pnpm start` on
+// Render). Render's free tier does not reliably set NODE_ENV=production
+// before the dyno starts, which previously caused Next.js to boot in
+// dev mode -- compiling routes on-demand and returning a plain-text
+// "Not Found" 404 to Render's smoke probe while the first request was
+// still being compiled. We force the env var (so Next, React, and any
+// transitively-loaded library see the correct mode) and pin dev=false
+// regardless of what the environment claims.
+process.env.NODE_ENV = 'production';
+
 const port = parseInt(process.env.PORT || '3000', 10);
 const hostname = '0.0.0.0';
-const dev = process.env.NODE_ENV !== 'production';
+const dev = false;
 
 function runDrizzlePushIfConfigured() {
   const drizzleConfigCandidates = ['drizzle.config.ts', 'drizzle.config.js', 'drizzle.config.mjs'];
