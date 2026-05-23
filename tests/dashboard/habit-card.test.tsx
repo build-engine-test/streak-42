@@ -19,9 +19,11 @@ import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 // load Next's server runtime.
 vi.mock("../../app/_actions/toggle-check-in", () => ({
   toggleCheckIn: vi.fn(),
+  toggleCheckInFormAction: vi.fn(),
 }));
 vi.mock("../../app/_actions/delete-habit", () => ({
   deleteHabit: vi.fn(),
+  deleteHabitFormAction: vi.fn(),
 }));
 
 import { HabitCard } from "../../app/dashboard/_components/habit-card";

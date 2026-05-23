@@ -33,8 +33,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-import { toggleCheckIn } from "@/app/_actions/toggle-check-in";
-import { deleteHabit } from "@/app/_actions/delete-habit";
+import { toggleCheckInFormAction } from "@/app/_actions/toggle-check-in";
+import { deleteHabitFormAction } from "@/app/_actions/delete-habit";
 
 export type HabitCardHabit = {
   /**
@@ -93,7 +93,7 @@ export function HabitCard({
         </span>
       </div>
 
-      <form action={toggleCheckIn} className="mt-6">
+      <form action={toggleCheckInFormAction} className="mt-6">
         <input type="hidden" name="habitId" value={habit.id} />
         <Button
           type="submit"
@@ -138,7 +138,7 @@ function DeleteHabitButton({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <form action={deleteHabit}>
+          <form action={deleteHabitFormAction}>
             <input type="hidden" name="habitId" value={habitId} />
             <AlertDialogAction type="submit">
               Delete habit
