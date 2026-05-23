@@ -40,39 +40,76 @@ function readEnv(name: "BETTER_AUTH_SECRET" | "BETTER_AUTH_URL"): string {
   return value;
 }
 
-const options = {
-  // Sourced from env; never literal. readEnv throws if missing.
-  secret: readEnv("BETTER_AUTH_SECRET"),
-  baseURL: readEnv("BETTER_AUTH_URL"),
+function buildOptions(): BetterAuthOptions {
+  return {
+    // Sourced from env; never literal. readEnv throws if missing.
+    secret: readEnv("BETTER_AUTH_SECRET"),
+    baseURL: readEnv("BETTER_AUTH_URL"),
 
-  database: drizzleAdapter(db, {
-    provider: "pg",
-    schema: {
-      user: schema.users,
-      session: schema.sessions,
-      account: schema.accounts,
-      verification: schema.verifications,
+    database: drizzleAdapter(db, {
+      provider: "pg",
+      schema: {
+        user: schema.users,
+        session: schema.sessions,
+        account: schema.accounts,
+        verification: schema.verifications,
+      },
+    }),
+
+    emailAndPassword: {
+      enabled: true,
+      // Phase 1 of the app keeps onboarding friction minimal. Email
+      // verification can be enabled later without a schema change.
+      requireEmailVerification: false,
+      // After sign-up, Better Auth issues a session immediately so the user
+      // lands on /dashboard without an extra sign-in step. Client-side
+      // navigation (in the sign-in / sign-up forms) is what carries the
+      // user to /dashboard; we keep the routing decision out of this file
+      // so the redirect target can stay co-located with the UI.
+      autoSignIn: true,
     },
-  }),
-
-  emailAndPassword: {
-    enabled: true,
-    // Phase 1 of the app keeps onboarding friction minimal. Email
-    // verification can be enabled later without a schema change.
-    requireEmailVerification: false,
-    // After sign-up, Better Auth issues a session immediately so the user
-    // lands on /dashboard without an extra sign-in step. Client-side
-    // navigation (in the sign-in / sign-up forms) is what carries the
-    // user to /dashboard; we keep the routing decision out of this file
-    // so the redirect target can stay co-located with the UI.
-    autoSignIn: true,
-  },
-} satisfies BetterAuthOptions;
+  };
+}
 
 /** Where Better Auth-driven flows (sign-in, sign-up) should land users. */
 export const POST_AUTH_REDIRECT = "/dashboard";
 
-export const auth = betterAuth(options);
+type BetterAuthInstance = ReturnType<typeof betterAuth>;
 
-export type Auth = typeof auth;
-export type Session = Awaited<ReturnType<typeof auth.api.getSession>>;
+/**
+ * Lazy singleton so that module evaluation does NOT immediately read env
+ * vars. Next.js's production build collects page data by importing server
+ * modules in a worker that does not have access to the deploy-time runtime
+ * env. If we eagerly call `betterAuth({ secret: readEnv(...) })` at module
+ * top-level, the build itself crashes with MissingAuthEnvError even though
+ * the env will exist at request time on Render. Deferring construction to
+ * the first property access keeps build-time imports safe while still
+ * failing loudly on the first real request when env is genuinely missing.
+ */
+let cachedAuth: BetterAuthInstance | null = null;
+function getAuth(): BetterAuthInstance {
+  if (cachedAuth === null) {
+    cachedAuth = betterAuth(buildOptions());
+  }
+  return cachedAuth;
+}
+
+export const auth: BetterAuthInstance = new Proxy({} as BetterAuthInstance, {
+  get(_target, prop, receiver) {
+    const instance = getAuth();
+    const value = Reflect.get(instance as object, prop, receiver);
+    return typeof value === "function" ? value.bind(instance) : value;
+  },
+  has(_target, prop) {
+    return Reflect.has(getAuth() as object, prop);
+  },
+  ownKeys(_target) {
+    return Reflect.ownKeys(getAuth() as object);
+  },
+  getOwnPropertyDescriptor(_target, prop) {
+    return Reflect.getOwnPropertyDescriptor(getAuth() as object, prop);
+  },
+});
+
+export type Auth = BetterAuthInstance;
+export type Session = Awaited<ReturnType<BetterAuthInstance["api"]["getSession"]>>;

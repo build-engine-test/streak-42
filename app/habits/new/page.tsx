@@ -19,6 +19,12 @@ export const metadata: Metadata = {
   description: "Add a new habit you want to track day-by-day.",
 };
 
+// Auth-gated: must never be statically pre-rendered. Better Auth's
+// session lookup needs request-scoped cookies, and the page itself
+// imports the lazy `auth` proxy whose env reads must happen at request
+// time (not at `next build` page-data collection time).
+export const dynamic = "force-dynamic";
+
 export default async function NewHabitPage(): Promise<React.ReactElement> {
   await requireUser();
   return <NewHabitForm />;

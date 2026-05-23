@@ -20,6 +20,15 @@ export const metadata: Metadata = {
     "A minimalist habit tracker. Add a habit, check it off daily, watch your streaks build.",
 };
 
+// The root layout renders <TopNav/>, an async Server Component that
+// inspects the Better Auth session via request cookies. That makes the
+// entire tree request-bound: it cannot be safely pre-rendered at build
+// time, and any attempt to do so would force Better Auth's lazy proxy
+// to construct itself in a worker that has no access to runtime env.
+// Force-dynamic here covers /_not-found and any other implicit static
+// pages that would otherwise inherit static rendering.
+export const dynamic = "force-dynamic";
+
 export default function RootLayout({
   children,
 }: Readonly<{
