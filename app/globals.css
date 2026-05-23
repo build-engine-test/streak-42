@@ -17,15 +17,20 @@
 /* lightness 0.40-0.70, chroma 0.08-0.18.                                  */
 /* ---------------------------------------------------------------------- */
 :root {
-  --brand-primary: oklch(0.55 0.14 250);
-  --brand-secondary: oklch(0.62 0.12 200);
-  --brand-accent: oklch(0.58 0.14 220);
-  --brand-neutral: oklch(0.58 0.08 250);
+  /* Streak — violet/indigo productivity palette.
+   * Hues 280-300 (violet) for primary, 260-270 (indigo) for secondary,
+   * 320 (magenta-violet) for the today-cell accent on the calendar grid.
+   * Neutrals carry a faint violet tint so cards and borders sit in the
+   * same temperature family as the primary, instead of looking grey. */
+  --brand-primary: oklch(0.55 0.18 295);
+  --brand-secondary: oklch(0.58 0.14 265);
+  --brand-accent: oklch(0.62 0.16 320);
+  --brand-neutral: oklch(0.58 0.04 290);
 
-  --brand-primary-dark: oklch(0.68 0.14 250);
-  --brand-secondary-dark: oklch(0.70 0.12 200);
-  --brand-accent-dark: oklch(0.70 0.14 220);
-  --brand-neutral-dark: oklch(0.30 0.06 250);
+  --brand-primary-dark: oklch(0.72 0.16 295);
+  --brand-secondary-dark: oklch(0.74 0.13 265);
+  --brand-accent-dark: oklch(0.74 0.15 320);
+  --brand-neutral-dark: oklch(0.30 0.04 290);
 }
 
 /* ---------------------------------------------------------------------- */

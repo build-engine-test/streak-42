@@ -1,42 +1,103 @@
-# Build Engine app (scaffold)
+# Streak
 
-This project was scaffolded by the Build Engine. The Executor will fill in features.
+A minimalist habit tracker. Add a habit, check it off daily, watch your streaks build.
+
+Single-tenant per signed-in user. Postgres-backed. No social features, no gamification beyond the streak number itself.
 
 ## Stack
 
-- Next.js 16 + TypeScript (strict)
-- Tailwind CSS v4 + shadcn primitives (new-york style, neutral base)
-- Vitest for unit tests
-- ESLint via `next lint`
-
-The full v1 stack (Drizzle, Better Auth) is layered in by the Executor as plan tasks rather than baked into this minimal scaffold.
-
-## Design system
-
-This scaffold ships the Modern-SaaS design language every Build Engine app inherits:
-
-- **Type:** Inter, loaded via `next/font/google`, exposed as `--font-inter`. Use `tabular-nums` (utility class in `globals.css`) on any cell that contains numbers.
-- **Color:** Each build receives an OKLCH brand palette from the Director, injected as `--brand-primary`, `--brand-secondary`, `--brand-accent`, `--brand-neutral` (plus dark variants). The shadcn semantic tokens (`--primary`, `--ring`, `--accent`, …) in `app/globals.css` reference these so palette swaps flow through automatically.
-- **Radius:** `--radius: 0.625rem` (≈10px) for the soft-rounded SaaS look.
-- **Components:** `components/ui/{button,card,badge,input,label,skeleton,hero-mesh}.tsx`. All composed with `cn(...)` from `lib/utils.ts`.
-- **Hero gradient:** `<HeroMesh />` renders a conic + radial mesh blob behind landing-page heros. Pure CSS, falls back to a soft `--primary` tint if no brand variables are set.
-- **Dark mode:** Wired via `next-themes`. Use `<ThemeToggle />` (Lucide Sun/Moon) anywhere; the root layout already wraps the tree in a `ThemeProvider`.
-- **Icons:** Lucide only. Inherit `currentColor`, so apply `text-primary` / `text-muted-foreground` on the parent to color them.
-
-Palette constraints (enforced by the Critic at plan time, see `schemas/plan_manifest.py::BrandPalette`):
-
-- OKLCH lightness 0.40-0.70, chroma 0.08-0.18.
-- ≥4.5:1 contrast for text on `--primary`.
-- ≥3:1 contrast for primary, secondary, and accent on white background.
+- **Next.js 16** (App Router) + TypeScript (strict)
+- **Tailwind CSS v4** + **shadcn/ui** primitives (new-york style, violet/indigo palette)
+- **Drizzle ORM** against Postgres
+- **Better Auth** (email + password)
+- **Vitest** + Testing Library for unit tests
+- **ESLint 9** flat config (extends `next/core-web-vitals`)
 
 ## Run locally
 
 ```bash
 pnpm install
+pnpm db:push      # apply Drizzle schema to your DATABASE_URL
 pnpm dev          # http://localhost:3000
 pnpm test:run     # vitest
 pnpm lint
 pnpm exec tsc --noEmit
+```
+
+`pnpm db:push` runs `drizzle-kit push`, which diffs the schema in
+`lib/db/schema.ts` against your local Postgres database and applies the
+delta. The same command runs on Render via the service's
+`preDeployCommand` so production migrations stay in lockstep with code.
+
+## Required environment variables
+
+Copy `.env.example` to `.env.local` and fill in:
+
+| Variable              | Purpose                                                          |
+| --------------------- | ---------------------------------------------------------------- |
+| `DATABASE_URL`        | Postgres connection string (Render-managed in production).       |
+| `BETTER_AUTH_SECRET`  | 32+ byte random string. Better Auth signs session cookies with it. |
+| `BETTER_AUTH_URL`     | Public base URL of the deployment (e.g. `http://localhost:3000`).  |
+
+Never commit real values. The deploy environment injects them at runtime
+via `render.yaml`.
+
+## Routes
+
+- `/` — public landing page (hero + three feature blurbs + Get started CTA)
+- `/sign-up`, `/sign-in` — Better Auth-driven email+password flows
+- `/sign-out` — POST-only route handler that invalidates the session and redirects to `/`
+- `/dashboard` — auth-gated card grid of habits with today's check-in toggle
+- `/habits/new` — auth-gated form to create a habit (`daily` or `weekdays`)
+- `/history` — auth-gated 30-day calendar grid
+
+Signed-out visitors to any gated route are redirected to `/sign-in` by
+`middleware.ts`.
+
+## Streak math rules
+
+The streak number on each dashboard card is the count of consecutive
+**expected** days, walking backwards from today, that the habit was
+checked off. The expectation depends on the habit's cadence:
+
+- **`daily`** habits: every calendar day counts. A streak breaks the first
+  day (today included, once today is past) that has no check-in.
+- **`weekdays`** habits: **Saturday and Sunday are skipped entirely** —
+  they are neither expected nor streak-breaking. Walking backwards from
+  Friday, the previous expected day is Thursday; the weekend is invisible
+  to the streak counter. A weekdays habit checked every weekday in a row
+  shows the same streak number on Monday morning as it did on the
+  preceding Friday evening, *plus* the Monday check if it has happened.
+
+Today itself never breaks a streak — if you have not yet checked off
+today's habit, the streak is whatever it was at the end of yesterday's
+expected day. As soon as you check today off, the streak ticks up by one.
+
+All date math is performed in UTC (`lib/streaks.ts::toUtcDateString`) so
+the result is stable regardless of where the server happens to run. The
+calendar grid in `/history` paints today's cell with the **accent** color
+when it is still unchecked, **primary** when checked, and
+**muted-foreground** for cells outside the expected cadence (e.g. weekend
+cells on a weekdays habit).
+
+## Project layout
+
+```
+app/
+  _actions/      # Server Actions (create habit, toggle check-in, delete habit)
+  _components/   # Shared Server/Client Components (TopNav, landing hero, …)
+  api/auth/      # Better Auth catch-all handler
+  dashboard/     # Auth-gated dashboard route
+  habits/        # Habit list + create-habit form
+  history/       # 30-day grid
+  sign-out/      # POST → auth.api.signOut → redirect /
+lib/
+  auth.ts        # Better Auth instance (Drizzle adapter, email+password)
+  auth-helpers.ts# requireUser / getCurrentUser server helpers
+  db/            # Drizzle schema + queries
+  streaks.ts     # Pure streak-math helpers (no I/O)
+drizzle/         # Generated migrations
+tests/           # Vitest unit + integration tests
 ```
 
 ## Generated by the Build Engine
